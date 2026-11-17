@@ -187,34 +187,107 @@ def page_text_all_frames(page) -> str:
     return "\n".join(parts)
 
 
+ENGINE = "https://booking.sanglier-durbuy.be/#!/language/nl"
+ENGINE_DATES = "https://booking.sanglier-durbuy.be/#!/dates"
+
+
+def click_day(page, day: int, month_label: str = "November 2026") -> bool:
+    """Klikt op een dag in de kalender van de november-maand (niet de grijze dagen van okt/dec)."""
+    js = """([day, label]) => {
+        const txt = el => (el.innerText || '').trim();
+        // zoek de kalender met het juiste maandlabel
+        let root = document;
+        for (const el of document.querySelectorAll('*')) {
+            if (el.children.length === 0 && txt(el) === label) {
+                let p = el; for (let i = 0; i < 6 && p.parentElement; i++) p = p.parentElement;
+                root = p; break;
+            }
+        }
+        const cells = [...root.querySelectorAll('td, button, a, span, div')]
+            .filter(e => txt(e) === String(day).padStart(2, '0') || txt(e) === String(day));
+        // neem de cel na de eerste 1 van de maand (dus in november zelf)
+        const all = [...root.querySelectorAll('td')].map(txt);
+        const firstIdx = all.findIndex(t => t === '01' || t === '1');
+        const tds = [...root.querySelectorAll('td')];
+        let target = null;
+        for (let i = Math.max(firstIdx, 0); i < tds.length; i++) {
+            const t = txt(tds[i]);
+            if (t === String(day).padStart(2, '0') || t === String(day)) { target = tds[i]; break; }
+        }
+        if (!target && cells.length) target = cells[cells.length > 1 ? 1 : 0];
+        if (!target) return 'not found';
+        const clickable = target.querySelector('a, button, span, div') || target;
+        clickable.click();
+        return 'clicked: ' + target.className + ' | ' + target.outerHTML.slice(0, 300);
+    }"""
+    try:
+        res = page.evaluate(js, [day, month_label])
+        log(f"klik dag {day}: {res}")
+        return str(res).startswith("clicked")
+    except Exception as e:
+        log(f"klik dag {day} fout: {e}")
+        return False
+
+
 def check_cubilis(page, shot=None) -> str:
-    global _found_booking_urls
-    if not _found_booking_urls:
-        _found_booking_urls = candidate_urls(discover_booking_links(page))
-    status = "unknown"
-    for i, url in enumerate(_found_booking_urls):
+    """Eigen boekingsmodule van het hotel: booking.sanglier-durbuy.be"""
+    api_log = []
+
+    def on_response(resp):
         try:
-            resp = page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            code = resp.status if resp else 0
-            page.wait_for_timeout(8000)
-            accept_cookies(page)
-            page.wait_for_timeout(4000)
-            text = page_text_all_frames(page)
-            for fr in page.frames[1:]:
-                log(f"  frame: {fr.url}")
-            st = classify(text) if code < 400 else "unknown"
-            log(f"cubilis poging {i + 1}: HTTP {code} -> {st} | {page.url}")
-            if shot:
-                page.screenshot(path=f"test_cubilis_{i + 1}.png", full_page=True)
-                with open(f"test_cubilis_{i + 1}.txt", "w", encoding="utf-8") as f:
-                    f.write(page.url + "\n\n" + text[:8000])
-            if st != "unknown":
-                status = st
-                _found_booking_urls = [url] + [u for u in _found_booking_urls if u != url]
+            if "sanglier-durbuy.be" in resp.url and resp.request.resource_type in ("xhr", "fetch"):
+                body = ""
+                try:
+                    body = resp.text()[:1500]
+                except Exception:
+                    pass
+                api_log.append(f"{resp.request.method} {resp.status} {resp.url}\n{body}\n")
+        except Exception:
+            pass
+
+    page.on("response", on_response)
+    status = "unknown"
+    try:
+        page.goto(ENGINE, wait_until="domcontentloaded", timeout=60000)
+        page.wait_for_timeout(5000)
+        accept_cookies(page)
+        if "dates" not in page.url:
+            page.goto(ENGINE_DATES, wait_until="domcontentloaded", timeout=60000)
+            page.wait_for_timeout(5000)
+        if shot:
+            page.screenshot(path="test_cubilis_1_kalender.png", full_page=True)
+            with open("test_cubilis_1_kalender.html", "w", encoding="utf-8") as f:
+                f.write(page.content())
+        click_day(page, d_in.day)
+        page.wait_for_timeout(1500)
+        click_day(page, d_out.day)
+        page.wait_for_timeout(1500)
+        if shot:
+            page.screenshot(path="test_cubilis_2_geselecteerd.png", full_page=True)
+        for sel in ("text=Verder", "button:has-text('Verder')", "a:has-text('Verder')"):
+            try:
+                page.click(sel, timeout=2000)
+                log(f"geklikt: {sel}")
                 break
-        except Exception as e:
-            log(f"cubilis poging {i + 1} fout: {e}")
+            except Exception:
+                pass
+        page.wait_for_timeout(9000)
+        text = page_text_all_frames(page)
+        status = classify(text)
+        log(f"na Verder: {page.url} -> {status}")
+        if shot:
+            page.screenshot(path="test_cubilis_3_resultaat.png", full_page=True)
+            with open("test_cubilis_3_resultaat.txt", "w", encoding="utf-8") as f:
+                f.write(page.url + "\n\n" + text[:8000])
+            with open("test_cubilis_3_resultaat.html", "w", encoding="utf-8") as f:
+                f.write(page.content())
+    except Exception as e:
+        log(f"hotelmodule fout: {e}")
+    finally:
+        page.remove_listener("response", on_response)
     if shot:
+        with open("test_api.txt", "w", encoding="utf-8") as f:
+            f.write("\n".join(api_log))
         with open("test_log.txt", "w", encoding="utf-8") as f:
             f.write("\n".join(DEBUG_LOG))
     return status
@@ -236,7 +309,7 @@ def check_booking(page, shot=None) -> str:
 
 
 SOURCES = [
-    ("Hotelwebsite (Cubilis)", check_cubilis, CUBILIS_START, "test_cubilis.png"),
+    ("Hotelwebsite", check_cubilis, ENGINE_DATES, "test_cubilis.png"),
     ("Booking.com", check_booking, BOOKING_URL, "test_booking.png"),
 ]
 
