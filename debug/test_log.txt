@@ -9,6 +9,23 @@ boekingslink gevonden: https://booking.sanglier-durbuy.be/giftcard/#!/
 boekingslink gevonden: https://www.sanglier-durbuy.be/en/booking
 boekingslink gevonden: https://booking.sanglier-durbuy.be/giftcard/#!/language/fr
 boekingslink gevonden: https://www.sanglier-durbuy.be/fr/reservations
-cubilis poging 1: HTTP 403 -> unknown | https://bookingengine.mylighthouse.com/v2/sanglier-des-ardennes-durbuy/Rooms/Select?Language=nl-NL&Arrival=2026-11-28&Departure=2026-11-29&Room=&Rate=&Package=&DiscountCode=
-cubilis poging 2: HTTP 403 -> unknown | https://bookingengine.mylighthouse.com/sanglier-des-ardennes/Rooms/Select?Language=nl-NL&Arrival=2026-11-28&Departure=2026-11-29&Room=&Rate=&Package=&DiscountCode=
-cubilis poging 3: HTTP 403 -> unknown | https://bookingengine.mylighthouse.com/hotel-le-sanglier-des-ardennes/Rooms/Select?Language=nl-NL&Arrival=2026-11-28&Departure=2026-11-29&Room=&Rate=&Package=&DiscountCode=
+  frame: https://onboard.triptease.io/kernel/v11935.194321/kernel-host.html?originHost=www.sanglier-durbuy.be
+  frame: about:blank
+  frame: https://consentcdn.cookiebot.com/sdk/bc-v5.min.html
+  frame: about:blank
+cubilis poging 1: HTTP 200 -> unknown | https://www.sanglier-durbuy.be/nl/reserveren
+  frame: https://onboard.triptease.io/kernel/v11935.194321/kernel-host.html?originHost=www.sanglier-durbuy.be
+  frame: about:blank
+  frame: https://consentcdn.cookiebot.com/sdk/bc-v5.min.html
+  frame: about:blank
+cubilis poging 2: HTTP 200 -> unknown | https://www.sanglier-durbuy.be/en/booking
+  frame: https://onboard.triptease.io/kernel/v11935.194321/kernel-host.html?originHost=www.sanglier-durbuy.be
+  frame: about:blank
+  frame: https://consentcdn.cookiebot.com/sdk/bc-v5.min.html
+  frame: about:blank
+cubilis poging 3: HTTP 200 -> unknown | https://www.sanglier-durbuy.be/fr/reservations
+  frame: about:blank
+  frame: https://consentcdn.cookiebot.com/sdk/bc-v5.min.html
+  frame: https://onboard.triptease.io/kernel/v11935.194321/kernel-host.html?originHost=booking.sanglier-durbuy.be
+  frame: about:blank
+cubilis poging 4: HTTP 200 -> unknown | https://booking.sanglier-durbuy.be/#!/dates
