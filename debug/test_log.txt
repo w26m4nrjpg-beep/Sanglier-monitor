@@ -2,5 +2,25 @@
 [hotel 27->29 nov] aankomst 27: [uib-day text-center ng-scope datepicker-mode-startdate available first start-day middle]
 [hotel 27->29 nov] na klik aankomst, vertrek 29: [uib-day text-center ng-scope datepicker-mode-startdate available first start-day middle]
 [hotel 27->29 nov] na Verder: https://booking.sanglier-durbuy.be/#!/dates
+[hotel 27->28 nov] aankomst 27: [uib-day text-center ng-scope datepicker-mode-startdate available first start-day middle]
+[hotel 27->28 nov] na klik aankomst, vertrek 28: [uib-day text-center ng-scope active last-selected available last middle]
+[hotel 27->28 nov] fout: Locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("td.uib-day").nth(33).locator("button").first
+    - locator resolved to <button type="button" tabindex="-1" ng-class="dt.hover" disabled="disabled" ng-disabled="::dt.disabled" ng-mouseenter="onMouseEnter(rows,selectedDt,dt);" class="btn btn-default btn-sm hover-end-selection" ng-click="select(dt.date);currentSelected=dt.date;" uib-is-class="↵            'btn-info' for selectedDt,↵            'active' for activeDt↵            on dt">…</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not enabled
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not enabled
+    - retrying click action
+      - waiting 100ms
+    58 × waiting for element to be visible, enabled and stable
+       - element is not enabled
+     - retrying click action
+       - waiting 500ms
 
-Hotelwebsite 28->29 nov: unavailable | Booking.com 28->29 nov: unavailable | Hotelwebsite 27->29 nov: unavailable | Booking.com 27->29 nov: unavailable
+
+Hotelwebsite 28->29 nov: unavailable | Booking.com 28->29 nov: unavailable | Hotelwebsite 27->29 nov: unavailable | Booking.com 27->29 nov: unavailable | CONTROLE Hotelwebsite 27->28: unknown

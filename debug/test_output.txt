@@ -1,4 +1,4 @@
-/home/runner/work/Sanglier-monitor/Sanglier-monitor/sanglier_monitor.py:279: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+/home/runner/work/Sanglier-monitor/Sanglier-monitor/sanglier_monitor.py:284: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   now = datetime.utcnow()
   [hotel 28->29 nov] aankomst 28: [uib-day text-center ng-scope datepicker-mode-startdate available last middle]
   [hotel 27->29 nov] aankomst 27: [uib-day text-center ng-scope datepicker-mode-startdate available first start-day middle]
@@ -8,3 +8,23 @@ Hotelwebsite 28->29 nov: unavailable
 Booking.com 28->29 nov: unavailable
 Hotelwebsite 27->29 nov: unavailable
 Booking.com 27->29 nov: unavailable
+  [hotel 27->28 nov] aankomst 27: [uib-day text-center ng-scope datepicker-mode-startdate available first start-day middle]
+  [hotel 27->28 nov] na klik aankomst, vertrek 28: [uib-day text-center ng-scope active last-selected available last middle]
+  [hotel 27->28 nov] fout: Locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("td.uib-day").nth(33).locator("button").first
+    - locator resolved to <button type="button" tabindex="-1" ng-class="dt.hover" disabled="disabled" ng-disabled="::dt.disabled" ng-mouseenter="onMouseEnter(rows,selectedDt,dt);" class="btn btn-default btn-sm hover-end-selection" ng-click="select(dt.date);currentSelected=dt.date;" uib-is-class="↵            'btn-info' for selectedDt,↵            'active' for activeDt↵            on dt">…</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not enabled
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not enabled
+    - retrying click action
+      - waiting 100ms
+    58 × waiting for element to be visible, enabled and stable
+       - element is not enabled
+     - retrying click action
+       - waiting 500ms
+
