@@ -113,6 +113,15 @@ CLICK_JS = """(idx) => {
 }"""
 
 
+def click_cell(page, idx: int) -> None:
+    """Echte muisklik op een kalenderdag."""
+    cell = page.locator("td.uib-day").nth(idx)
+    btn = cell.locator("button")
+    target = btn.first if btn.count() else cell
+    target.scroll_into_view_if_needed()
+    target.click()
+
+
 def read_calendar(page) -> dict:
     info = page.evaluate(CAL_JS)
     return {"label": info.get("label", ""),
@@ -147,7 +156,7 @@ def check_hotel(page, ci: str, co: str, shot: str = "") -> str:
             return "unavailable"
 
         # Aankomstdag aanklikken; de kalender toont dan de mogelijke vertrekdagen
-        page.evaluate(CLICK_JS, idx_in)
+        click_cell(page, idx_in)
         page.wait_for_timeout(2000)
         cal2 = read_calendar(page)
         cls_out, idx_out = cal2["days"].get(b.day, ("", -1))
@@ -157,7 +166,7 @@ def check_hotel(page, ci: str, co: str, shot: str = "") -> str:
         if re.search(r"\b(disabled|unavailable|not-available|blocked)\b", cls_out):
             return "unavailable"
 
-        page.evaluate(CLICK_JS, idx_out)
+        click_cell(page, idx_out)
         page.wait_for_timeout(2000)
         if shot:
             page.screenshot(path=f"{shot}_geselecteerd.png", full_page=True)
