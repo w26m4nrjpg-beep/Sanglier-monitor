@@ -1,0 +1,14 @@
+hotelsite https://www.sanglier-durbuy.be/nl -> HTTP 200, 149 links
+hotelsite https://www.sanglier-durbuy.be/en/hotel/rooms-suites -> HTTP 200, 117 links
+hotelsite https://www.sanglier-durbuy.be/fr -> HTTP 200, 106 links
+boekingslink gevonden: https://www.facebook.com/policy.php/
+boekingslink gevonden: https://booking.sanglier-durbuy.be/giftcard/#!/language/nl
+boekingslink gevonden: https://www.sanglier-durbuy.be/nl/reserveren
+boekingslink gevonden: https://www.facebook.com/lesanglierdesardennes
+boekingslink gevonden: https://booking.sanglier-durbuy.be/giftcard/#!/
+boekingslink gevonden: https://www.sanglier-durbuy.be/en/booking
+boekingslink gevonden: https://booking.sanglier-durbuy.be/giftcard/#!/language/fr
+boekingslink gevonden: https://www.sanglier-durbuy.be/fr/reservations
+cubilis poging 1: HTTP 403 -> unknown | https://bookingengine.mylighthouse.com/v2/sanglier-des-ardennes-durbuy/Rooms/Select?Language=nl-NL&Arrival=2026-11-28&Departure=2026-11-29&Room=&Rate=&Package=&DiscountCode=
+cubilis poging 2: HTTP 403 -> unknown | https://bookingengine.mylighthouse.com/sanglier-des-ardennes/Rooms/Select?Language=nl-NL&Arrival=2026-11-28&Departure=2026-11-29&Room=&Rate=&Package=&DiscountCode=
+cubilis poging 3: HTTP 403 -> unknown | https://bookingengine.mylighthouse.com/hotel-le-sanglier-des-ardennes/Rooms/Select?Language=nl-NL&Arrival=2026-11-28&Departure=2026-11-29&Room=&Rate=&Package=&DiscountCode=
