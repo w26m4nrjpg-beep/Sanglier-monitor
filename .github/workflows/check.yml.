@@ -1,0 +1,45 @@
+name: Sanglier kamer-check
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # elke 15 minuten (GitHub kan soms wat later starten)
+  workflow_dispatch:          # handmatig starten via de knop "Run workflow"
+    inputs:
+      test:
+        description: "Testmodus (screenshots + testmelding)"
+        type: boolean
+        default: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installeer afhankelijkheden
+        run: |
+          pip install playwright requests
+          python -m playwright install --with-deps chromium
+
+      - name: Controleer beschikbaarheid
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.test }}" = "true" ]; then
+            python sanglier_monitor.py --test
+          else
+            python sanglier_monitor.py --once
+          fi
+
+      - name: Bewaar screenshots (alleen testmodus)
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: "*.png"
+          if-no-files-found: ignore
