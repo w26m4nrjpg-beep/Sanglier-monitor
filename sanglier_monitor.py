@@ -159,18 +159,32 @@ def discover_booking_links(page) -> list:
 def candidate_urls(links: list) -> list:
     cands = []
     for l in links:
+        low = l.lower()
+        if "giftcard" in low or "facebook" in low or "booking.com" in low:
+            continue
         m = re.match(r"(https?://reservations\.cubilis\.eu/[^/?#]+)", l, re.I)
         if m:
             cands.append(cubilis_select_url(m.group(1)))
-        elif "cubilis" in l.lower():
+        elif "sanglier-durbuy.be" in low or "cubilis" in low or "mylighthouse" in low:
             cands.append(l)
-    for slug in CUBILIS_SLUGS:
-        cands.append(cubilis_select_url(f"https://reservations.cubilis.eu/{slug}"))
+    # voorkeur: Nederlandstalige reserveringspagina eerst
+    cands.sort(key=lambda u: (0 if "/nl/" in u else 1))
+    cands.append("https://booking.sanglier-durbuy.be/#!/language/nl")
     out = []
     for c in cands:
         if c not in out:
             out.append(c)
     return out
+
+
+def page_text_all_frames(page) -> str:
+    parts = []
+    for fr in page.frames:
+        try:
+            parts.append(fr.inner_text("body", timeout=3000))
+        except Exception:
+            pass
+    return "\n".join(parts)
 
 
 def check_cubilis(page, shot=None) -> str:
@@ -182,15 +196,18 @@ def check_cubilis(page, shot=None) -> str:
         try:
             resp = page.goto(url, wait_until="domcontentloaded", timeout=60000)
             code = resp.status if resp else 0
-            page.wait_for_timeout(7000)
+            page.wait_for_timeout(8000)
             accept_cookies(page)
-            text = page.inner_text("body")
+            page.wait_for_timeout(4000)
+            text = page_text_all_frames(page)
+            for fr in page.frames[1:]:
+                log(f"  frame: {fr.url}")
             st = classify(text) if code < 400 else "unknown"
             log(f"cubilis poging {i + 1}: HTTP {code} -> {st} | {page.url}")
             if shot:
                 page.screenshot(path=f"test_cubilis_{i + 1}.png", full_page=True)
                 with open(f"test_cubilis_{i + 1}.txt", "w", encoding="utf-8") as f:
-                    f.write(page.url + "\n\n" + text[:5000])
+                    f.write(page.url + "\n\n" + text[:8000])
             if st != "unknown":
                 status = st
                 _found_booking_urls = [url] + [u for u in _found_booking_urls if u != url]
