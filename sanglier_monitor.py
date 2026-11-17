@@ -229,65 +229,53 @@ def click_day(page, day: int, month_label: str = "November 2026") -> bool:
         return False
 
 
+DAY_CLASSES_JS = """() => {
+    const tds = [...document.querySelectorAll('td.uib-day')];
+    const out = []; let inMonth = false;
+    for (const td of tds) {
+        const t = (td.innerText || '').trim();
+        if (t === '01' || t === '1') inMonth = !inMonth;   // 1e keer: begin maand, 2e keer: volgende maand
+        if (inMonth) out.push([parseInt(t, 10), td.className]);
+    }
+    const label = [...document.querySelectorAll('strong, button, th')]
+        .map(e => (e.innerText || '').trim()).find(x => /\\d{4}/.test(x)) || '';
+    return {label, days: out};
+}"""
+
+
 def check_cubilis(page, shot=None) -> str:
-    """Eigen boekingsmodule van het hotel: booking.sanglier-durbuy.be"""
-    api_log = []
+    """Eigen boekingsmodule van het hotel (booking.sanglier-durbuy.be).
 
-    def on_response(resp):
-        try:
-            if "sanglier-durbuy.be" in resp.url and resp.request.resource_type in ("xhr", "fetch"):
-                body = ""
-                try:
-                    body = resp.text()[:1500]
-                except Exception:
-                    pass
-                api_log.append(f"{resp.request.method} {resp.status} {resp.url}\n{body}\n")
-        except Exception:
-            pass
-
-    page.on("response", on_response)
+    De kalender geeft elke dag CSS-klassen mee:
+      'start-day' = je kunt op die dag aankomen
+      'last'      = je kunt op die dag vertrekken
+    Beschikbaar voor 28->29 nov = 28 heeft 'start-day' en 29 heeft 'last'.
+    """
     status = "unknown"
     try:
         page.goto(ENGINE, wait_until="domcontentloaded", timeout=60000)
-        page.wait_for_timeout(5000)
+        page.wait_for_timeout(4000)
         accept_cookies(page)
         if "dates" not in page.url:
             page.goto(ENGINE_DATES, wait_until="domcontentloaded", timeout=60000)
-            page.wait_for_timeout(5000)
+        page.wait_for_selector("td.uib-day", timeout=30000)
+        page.wait_for_timeout(3000)
+        info = page.evaluate(DAY_CLASSES_JS)
+        label = info.get("label", "")
+        days = {d: c for d, c in info.get("days", [])}
+        c_in, c_out = days.get(d_in.day, ""), days.get(d_out.day, "")
+        log(f"kalender '{label}': {d_in.day} nov = [{c_in}] | {d_out.day} nov = [{c_out}]")
+        if "nov" not in label.lower() and label:
+            log("let op: kalender staat niet op november")
+        if c_in and c_out:
+            can_arrive = "start-day" in c_in.split()
+            can_leave = "last" in c_out.split()
+            status = "available" if (can_arrive and can_leave) else "unavailable"
         if shot:
-            page.screenshot(path="test_cubilis_1_kalender.png", full_page=True)
-            with open("test_cubilis_1_kalender.html", "w", encoding="utf-8") as f:
-                f.write(page.content())
-        click_day(page, d_in.day)
-        page.wait_for_timeout(1500)
-        click_day(page, d_out.day)
-        page.wait_for_timeout(1500)
-        if shot:
-            page.screenshot(path="test_cubilis_2_geselecteerd.png", full_page=True)
-        for sel in ("text=Verder", "button:has-text('Verder')", "a:has-text('Verder')"):
-            try:
-                page.click(sel, timeout=2000)
-                log(f"geklikt: {sel}")
-                break
-            except Exception:
-                pass
-        page.wait_for_timeout(9000)
-        text = page_text_all_frames(page)
-        status = classify(text)
-        log(f"na Verder: {page.url} -> {status}")
-        if shot:
-            page.screenshot(path="test_cubilis_3_resultaat.png", full_page=True)
-            with open("test_cubilis_3_resultaat.txt", "w", encoding="utf-8") as f:
-                f.write(page.url + "\n\n" + text[:8000])
-            with open("test_cubilis_3_resultaat.html", "w", encoding="utf-8") as f:
-                f.write(page.content())
+            page.screenshot(path="test_hotel_kalender.png", full_page=True)
     except Exception as e:
         log(f"hotelmodule fout: {e}")
-    finally:
-        page.remove_listener("response", on_response)
     if shot:
-        with open("test_api.txt", "w", encoding="utf-8") as f:
-            f.write("\n".join(api_log))
         with open("test_log.txt", "w", encoding="utf-8") as f:
             f.write("\n".join(DEBUG_LOG))
     return status
