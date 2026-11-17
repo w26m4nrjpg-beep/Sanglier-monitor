@@ -165,13 +165,24 @@ def check_hotel(page, ci: str, co: str, shot: str = "") -> str:
         log(f"[hotel {name}] na klik aankomst, vertrek {b.day}: [{cls_out}]")
         if idx_out < 0:
             return "unknown"
-        if re.search(r"\b(disabled|unavailable|not-available|blocked)\b", cls_out):
-            return "unavailable"
-
-        click_cell(page, idx_out)
-        page.wait_for_timeout(2000)
+        # Na de aankomstklik kiest de kalender zelf 1 nacht; anders vertrekdag aanklikken.
+        if "last-selected" not in cls_out.split():
+            try:
+                click_cell(page, idx_out)
+            except Exception as e:
+                log(f"[hotel {name}] vertrekdag niet klikbaar: {str(e)[:120]}")
+                return "unavailable"
+            page.wait_for_timeout(2000)
+        cal3 = read_calendar(page)
+        c_in3 = cal3["days"].get(a.day, ("", -1))[0].split()
+        c_out3 = cal3["days"].get(b.day, ("", -1))[0].split()
+        log(f"[hotel {name}] na selectie: aankomst [{' '.join(c_in3)}] | vertrek [{' '.join(c_out3)}]")
         if shot:
             page.screenshot(path=f"{shot}_geselecteerd.png", full_page=True)
+        # Geldig verblijf = vertrekdag is gemarkeerd als laatste dag van de selectie.
+        # (Is de klik op de vertrekdag een nieuwe aankomst geworden, dan is dit niet zo.)
+        if "last-selected" not in c_out3:
+            return "unavailable"
         try:
             page.click("text=Verder", timeout=3000)
         except Exception:
@@ -184,14 +195,12 @@ def check_hotel(page, ci: str, co: str, shot: str = "") -> str:
             with open(f"{shot}_resultaat.txt", "w", encoding="utf-8") as f:
                 f.write(page.url + "\n\n" + text[:8000])
         log(f"[hotel {name}] na Verder: {page.url}")
-        if any(p in low for p in NO_AVAIL):
-            return "unavailable"
-        if "#!/dates" not in page.url and re.search(r"€\s?\d|\d[.,]\d{2}\s?€", text):
-            return "available"
         if "#!/dates" in page.url:
-            # niet doorgegaan naar de volgende stap -> combinatie niet boekbaar
+            log(f"[hotel {name}] wel geselecteerd maar niet doorgegaan naar stap 2")
+            return "unknown"
+        if any(p in low for p in NO_AVAIL) and not re.search(r"€\s?\d|\d[.,]\d{2}\s?€", text):
             return "unavailable"
-        return "unknown"
+        return "available"
     except Exception as e:
         log(f"[hotel {name}] fout: {e}")
         return "unknown"
