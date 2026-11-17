@@ -158,6 +158,8 @@ def check_hotel(page, ci: str, co: str, shot: str = "") -> str:
         # Aankomstdag aanklikken; de kalender toont dan de mogelijke vertrekdagen
         click_cell(page, idx_in)
         page.wait_for_timeout(2000)
+        if shot:
+            page.screenshot(path=f"{shot}_na_aankomst.png", full_page=True)
         cal2 = read_calendar(page)
         cls_out, idx_out = cal2["days"].get(b.day, ("", -1))
         log(f"[hotel {name}] na klik aankomst, vertrek {b.day}: [{cls_out}]")
@@ -272,6 +274,9 @@ def main() -> None:
                 report(results)
                 summary = " | ".join(f"{s} {v}: {st}" for s, v, st, _ in results)
                 if test:
+                    # controle: een verblijf dat volgens de kalender wel kan (vr 27 -> za 28)
+                    st = check_hotel(page, "2026-11-27", "2026-11-28", shot="test_controle_27-28")
+                    summary += f" | CONTROLE Hotelwebsite 27->28: {st}"
                     with open("test_log.txt", "w", encoding="utf-8") as f:
                         f.write("\n".join(DEBUG_LOG) + "\n\n" + summary)
                     if not os.environ.get("SKIP_TEST_NOTIFY"):
