@@ -1,8 +1,1 @@
-klik dag 28: clicked: uib-day text-center ng-scope datepicker-mode-startdate available last middle | <td ng-repeat="dt in row" class="uib-day text-center ng-scope datepicker-mode-startdate available last middle" role="gridcell" id="datepicker-18-734-33" ng-class="::dt.customClass">
-        <button type="button" class="btn btn-default btn-sm" uib-is-class="
-            'btn-info' for selectedDt,
-   
-klik dag 29: clicked: uib-day text-center ng-scope datepicker-mode-startdate available first start-day middle ng-leave-prepare | <td ng-repeat="dt in row" class="uib-day text-center ng-scope datepicker-mode-startdate available first start-day middle ng-leave-prepare" role="gridcell" id="datepicker-18-734-34" ng-class="::dt.customClass" data-ng-animate="2">
-        <button type="button" class="btn btn-default btn-sm" uib-is-cl
-geklikt: text=Verder
-na Verder: https://booking.sanglier-durbuy.be/#!/dates -> unknown
+kalender 'November 2026': 28 nov = [uib-day text-center ng-scope datepicker-mode-startdate available last middle] | 29 nov = [uib-day text-center ng-scope datepicker-mode-startdate available first start-day middle]
