@@ -1,4 +1,4 @@
-/home/runner/work/Sanglier-monitor/Sanglier-monitor/sanglier_monitor.py:270: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+/home/runner/work/Sanglier-monitor/Sanglier-monitor/sanglier_monitor.py:279: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   now = datetime.utcnow()
   [hotel 28->29 nov] aankomst 28: [uib-day text-center ng-scope datepicker-mode-startdate available last middle]
   [hotel 27->29 nov] aankomst 27: [uib-day text-center ng-scope datepicker-mode-startdate available first start-day middle]
