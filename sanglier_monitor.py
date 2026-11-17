@@ -49,14 +49,20 @@ d_in = datetime.strptime(CHECKIN, "%Y-%m-%d")
 d_out = datetime.strptime(CHECKOUT, "%Y-%m-%d")
 
 HOTEL_SITE = "https://www.sanglier-durbuy.be/nl"
-CUBILIS_START = "https://booking.cubilis.eu/select_dates.aspx?logisid=702&booktemplate=1&taal=nl"
-# Cubilis-URL's waarin de datums al zijn ingevuld (worden om de beurt geprobeerd)
-CUBILIS_DIRECT = [
-    f"https://booking.cubilis.eu/check_availability.aspx?logisid=702&taal=nl"
-    f"&startdatum={d_in:%Y-%m-%d}&einddatum={d_out:%Y-%m-%d}&aantalpersonen={ADULTS}",
-    f"https://booking.cubilis.eu/check_availability.aspx?logisid=702&taal=nl"
-    f"&startdatum={d_in:%d-%m-%Y}&einddatum={d_out:%d-%m-%Y}&aantalpersonen={ADULTS}",
+HOTEL_PAGES = [
+    "https://www.sanglier-durbuy.be/nl",
+    "https://www.sanglier-durbuy.be/en/hotel/rooms-suites",
+    "https://www.sanglier-durbuy.be/fr",
 ]
+# Nieuwe Cubilis-boekingsmodule (reservations.cubilis.eu/<hotel>/Rooms/Select)
+CUBILIS_SLUGS = ["sanglier-des-ardennes-durbuy", "sanglier-des-ardennes", "hotel-le-sanglier-des-ardennes"]
+CUBILIS_START = HOTEL_SITE   # link in de melding: de hotelsite
+
+
+def cubilis_select_url(base: str) -> str:
+    return (f"{base.rstrip('/')}/Rooms/Select?Language=nl-NL"
+            f"&Arrival={d_in:%Y-%m-%d}&Departure={d_out:%Y-%m-%d}"
+            f"&Room=&Rate=&Package=&DiscountCode=")
 
 BOOKING_URL = (
     "https://www.booking.com/hotel/be/sanglier-des-ardennes.html"
@@ -116,53 +122,84 @@ def classify(text: str) -> str:
 
 
 # ---------- Cubilis (eigen website van het hotel) ----------
-def fill_cubilis_form(page) -> None:
-    """Probeert de datums in te vullen op het Cubilis-startscherm."""
-    page.goto(CUBILIS_START, wait_until="domcontentloaded", timeout=60000)
-    page.wait_for_timeout(3000)
-    accept_cookies(page)
-    inputs = page.locator("input[type=text], input[type=date], input:not([type])")
-    date_inputs = [inputs.nth(i) for i in range(inputs.count())
-                   if re.search(r"(dat|arriv|depart|start|eind|aankomst|vertrek|from|to)",
-                                (inputs.nth(i).get_attribute("name") or "") +
-                                (inputs.nth(i).get_attribute("id") or ""), re.I)]
-    if len(date_inputs) >= 2:
-        for inp, d in ((date_inputs[0], d_in), (date_inputs[1], d_out)):
-            typ = inp.get_attribute("type") or "text"
-            val = f"{d:%Y-%m-%d}" if typ == "date" else f"{d:%d/%m/%Y}"
-            inp.evaluate("(el, v) => { el.removeAttribute('readonly'); el.value = v; "
-                         "el.dispatchEvent(new Event('change', {bubbles:true})); }", val)
-    for sel in ("input[type=submit]", "button[type=submit]",
-                "button:has-text('Zoek')", "button:has-text('Beschikbaarheid')",
-                "a:has-text('Zoek')", "a:has-text('Volgende')"):
+_found_booking_urls: list = []
+DEBUG_LOG: list = []
+
+
+def log(msg: str) -> None:
+    DEBUG_LOG.append(msg)
+    print("  " + msg)
+
+
+def discover_booking_links(page) -> list:
+    """Zoekt op de hotelsite naar links naar de boekingsmodule."""
+    links = []
+    for site in HOTEL_PAGES:
         try:
-            page.click(sel, timeout=1500)
+            resp = page.goto(site, wait_until="domcontentloaded", timeout=60000)
+            page.wait_for_timeout(3000)
+            accept_cookies(page)
+            hrefs = page.eval_on_selector_all(
+                "a[href], iframe[src], form[action]",
+                "els => els.map(e => e.href || e.src || e.action)")
+            log(f"hotelsite {site} -> HTTP {resp.status if resp else '?'}, {len(hrefs)} links")
+            for h in hrefs:
+                if h and re.search(r"(cubilis|stardekk|book|reserv|boek)", h, re.I) \
+                        and "booking.com" not in h and h not in links:
+                    links.append(h)
+        except Exception as e:
+            log(f"hotelsite {site} fout: {e}")
+        if any("cubilis" in l for l in links):
             break
-        except Exception:
-            pass
-    page.wait_for_timeout(6000)
+    for l in links[:15]:
+        log(f"boekingslink gevonden: {l}")
+    return links
+
+
+def candidate_urls(links: list) -> list:
+    cands = []
+    for l in links:
+        m = re.match(r"(https?://reservations\.cubilis\.eu/[^/?#]+)", l, re.I)
+        if m:
+            cands.append(cubilis_select_url(m.group(1)))
+        elif "cubilis" in l.lower():
+            cands.append(l)
+    for slug in CUBILIS_SLUGS:
+        cands.append(cubilis_select_url(f"https://reservations.cubilis.eu/{slug}"))
+    out = []
+    for c in cands:
+        if c not in out:
+            out.append(c)
+    return out
 
 
 def check_cubilis(page, shot=None) -> str:
+    global _found_booking_urls
+    if not _found_booking_urls:
+        _found_booking_urls = candidate_urls(discover_booking_links(page))
     status = "unknown"
-    for url in CUBILIS_DIRECT:
+    for i, url in enumerate(_found_booking_urls):
         try:
-            page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            page.wait_for_timeout(5000)
+            resp = page.goto(url, wait_until="domcontentloaded", timeout=60000)
+            code = resp.status if resp else 0
+            page.wait_for_timeout(7000)
             accept_cookies(page)
-            status = classify(page.inner_text("body"))
-            if status != "unknown":
+            text = page.inner_text("body")
+            st = classify(text) if code < 400 else "unknown"
+            log(f"cubilis poging {i + 1}: HTTP {code} -> {st} | {page.url}")
+            if shot:
+                page.screenshot(path=f"test_cubilis_{i + 1}.png", full_page=True)
+                with open(f"test_cubilis_{i + 1}.txt", "w", encoding="utf-8") as f:
+                    f.write(page.url + "\n\n" + text[:5000])
+            if st != "unknown":
+                status = st
+                _found_booking_urls = [url] + [u for u in _found_booking_urls if u != url]
                 break
-        except Exception:
-            pass
-    if status == "unknown":
-        try:
-            fill_cubilis_form(page)
-            status = classify(page.inner_text("body"))
         except Exception as e:
-            print("  cubilis-formulier fout:", e)
+            log(f"cubilis poging {i + 1} fout: {e}")
     if shot:
-        page.screenshot(path=shot, full_page=True)
+        with open("test_log.txt", "w", encoding="utf-8") as f:
+            f.write("\n".join(DEBUG_LOG))
     return status
 
 
@@ -235,7 +272,8 @@ def main() -> None:
                 except Exception as e:
                     st = f"fout: {e}"
                 print(f"{name}: {st}   (screenshot: {shot})")
-            notify("Monitor-test", "Testmelding: meldingen werken.", priority="low")
+            if not os.environ.get("SKIP_TEST_NOTIFY"):
+                notify("Monitor-test", "Testmelding: meldingen werken.", priority="low")
             browser.close()
             return
 

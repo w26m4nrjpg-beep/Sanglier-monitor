@@ -9,11 +9,23 @@ on:
         description: "Testmodus (screenshots + testmelding)"
         type: boolean
         default: true
+  push:                       # na een aanpassing van het script: automatische testrun
+    branches: [main]
+    paths:
+      - "sanglier_monitor.py"
+      - ".github/workflows/check.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sanglier-check
+  cancel-in-progress: false
 
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
 
@@ -26,20 +38,34 @@ jobs:
           pip install playwright requests
           python -m playwright install --with-deps chromium
 
+      - name: Bepaal modus
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] || { [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.test }}" = "true" ]; }; then
+            echo "test=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "test=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Controleer beschikbaarheid
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          SKIP_TEST_NOTIFY: ${{ github.event_name == 'push' && '1' || '' }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.test }}" = "true" ]; then
-            python sanglier_monitor.py --test
+          if [ "${{ steps.mode.outputs.test }}" = "true" ]; then
+            python sanglier_monitor.py --test 2>&1 | tee test_output.txt
           else
             python sanglier_monitor.py --once
           fi
 
-      - name: Bewaar screenshots (alleen testmodus)
-        if: always() && github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
-        with:
-          name: screenshots
-          path: "*.png"
-          if-no-files-found: ignore
+      - name: Bewaar testresultaten in debug/
+        if: always() && steps.mode.outputs.test == 'true'
+        run: |
+          rm -rf debug && mkdir -p debug
+          cp -f *.png *.txt debug/ 2>/dev/null || true
+          git config user.name "sanglier-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A debug
+          git commit -m "Testresultaten $(date -u +%Y-%m-%dT%H:%M)Z" || exit 0
+          git pull --rebase origin main || true
+          git push origin HEAD:main
