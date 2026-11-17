@@ -1,33 +1,10 @@
-  hotelsite https://www.sanglier-durbuy.be/nl -> HTTP 200, 149 links
-  hotelsite https://www.sanglier-durbuy.be/en/hotel/rooms-suites -> HTTP 200, 117 links
-  hotelsite https://www.sanglier-durbuy.be/fr -> HTTP 200, 106 links
-  boekingslink gevonden: https://www.facebook.com/policy.php/
-  boekingslink gevonden: https://booking.sanglier-durbuy.be/giftcard/#!/language/nl
-  boekingslink gevonden: https://www.sanglier-durbuy.be/nl/reserveren
-  boekingslink gevonden: https://www.facebook.com/lesanglierdesardennes
-  boekingslink gevonden: https://booking.sanglier-durbuy.be/giftcard/#!/
-  boekingslink gevonden: https://www.sanglier-durbuy.be/en/booking
-  boekingslink gevonden: https://booking.sanglier-durbuy.be/giftcard/#!/language/fr
-  boekingslink gevonden: https://www.sanglier-durbuy.be/fr/reservations
-    frame: https://onboard.triptease.io/kernel/v11935.194321/kernel-host.html?originHost=www.sanglier-durbuy.be
-    frame: about:blank
-    frame: https://consentcdn.cookiebot.com/sdk/bc-v5.min.html
-    frame: about:blank
-  cubilis poging 1: HTTP 200 -> unknown | https://www.sanglier-durbuy.be/nl/reserveren
-    frame: https://onboard.triptease.io/kernel/v11935.194321/kernel-host.html?originHost=www.sanglier-durbuy.be
-    frame: about:blank
-    frame: https://consentcdn.cookiebot.com/sdk/bc-v5.min.html
-    frame: about:blank
-  cubilis poging 2: HTTP 200 -> unknown | https://www.sanglier-durbuy.be/en/booking
-    frame: https://onboard.triptease.io/kernel/v11935.194321/kernel-host.html?originHost=www.sanglier-durbuy.be
-    frame: about:blank
-    frame: https://consentcdn.cookiebot.com/sdk/bc-v5.min.html
-    frame: about:blank
-  cubilis poging 3: HTTP 200 -> unknown | https://www.sanglier-durbuy.be/fr/reservations
-    frame: about:blank
-    frame: https://consentcdn.cookiebot.com/sdk/bc-v5.min.html
-    frame: https://onboard.triptease.io/kernel/v11935.194321/kernel-host.html?originHost=booking.sanglier-durbuy.be
-    frame: about:blank
-  cubilis poging 4: HTTP 200 -> unknown | https://booking.sanglier-durbuy.be/#!/dates
-Hotelwebsite (Cubilis): unknown   (screenshot: test_cubilis.png)
+  klik dag 28: clicked: uib-day text-center ng-scope datepicker-mode-startdate available last middle | <td ng-repeat="dt in row" class="uib-day text-center ng-scope datepicker-mode-startdate available last middle" role="gridcell" id="datepicker-18-734-33" ng-class="::dt.customClass">
+        <button type="button" class="btn btn-default btn-sm" uib-is-class="
+            'btn-info' for selectedDt,
+   
+  klik dag 29: clicked: uib-day text-center ng-scope datepicker-mode-startdate available first start-day middle ng-leave-prepare | <td ng-repeat="dt in row" class="uib-day text-center ng-scope datepicker-mode-startdate available first start-day middle ng-leave-prepare" role="gridcell" id="datepicker-18-734-34" ng-class="::dt.customClass" data-ng-animate="2">
+        <button type="button" class="btn btn-default btn-sm" uib-is-cl
+  geklikt: text=Verder
+  na Verder: https://booking.sanglier-durbuy.be/#!/dates -> unknown
+Hotelwebsite: unknown   (screenshot: test_cubilis.png)
 Booking.com: unavailable   (screenshot: test_booking.png)
